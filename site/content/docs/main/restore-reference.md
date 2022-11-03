@@ -169,8 +169,9 @@ data:
   # class name.
   <old-storage-class>: <new-storage-class>
 ```
-### Changing Pod/Deployment/StatefulSet/DaemonSet/ReplicaSet/ReplicationController/Job/CronJob Image Repositories  
-Velero can change the image name of pod/deployment/statefulsets/daemonset/replicaset/replicationcontroller/job/cronjob during restores. To configure a image name mapping, create a config map in the Velero namespace like the following:
+### Changing Pod/Deployment/Statefulsets/Daemonset/Replicaset/Replicationcontroller/Job/Cronjob Image Repositories  
+
+Velero can change the image repositories of pod/deployment/statefulsets/daemonset/replicaset/replicationcontroller/job/cronjob during restores. To configure a image repositoriy mapping, create a config map in the Velero namespace like the following:
 
 ```yaml
 apiVersion: v1
@@ -178,7 +179,7 @@ kind: ConfigMap
 metadata:
   # any name can be used; Velero uses the labels (below)
   # to identify it rather than the name
-  name: change-image-name-config
+  name: change-image-repository-config
   # must be in the velero namespace
   namespace: velero
   # the below labels should be used verbatim in your
@@ -189,19 +190,17 @@ metadata:
     velero.io/plugin-config: ""
     # this label identifies the name and kind of plugin
     # that this ConfigMap is for.
-    velero.io/change-image-name: RestoreItemAction
+    velero.io/change-image-repository: RestoreItemAction
 data:
-  # add 1+ key-value pairs here, where the key can be any
-  # words that ConfigMap accepts. 
-  # the value should be：
-  # "<old_image_name_sub_part><delimiter><new_image_name_sub_part>"
-  # for current implementation the <delimiter> can only be ","
-	# e.x: in case your old image name is 1.1.1.1:5000/abc:test
-	"case1":"1.1.1.1:5000,2.2.2.2:3000"
-	"case2":"5000,3000"
-	"case3":"abc:test,edf:test"
-  "case5":"test,latest"
-	"case4":"1.1.1.1:5000/abc:test,2.2.2.2:3000/edf:test"
+  # add 1+ key-value pairs here, where the key is the old
+  # image repository name and the value is the new image
+  # repository name.
+  <old-image-repository>: <[new_image_repository>
+  # if image repository have letters that configmap not support for key 
+  # use "specific" as the key 
+  # and use "<old_image_repository>/<new_image_repository>" as the value
+  # e.x: "specific": "1.1.1.1:5000/2.2.2.2:3000"
+  "specific": <old_image_repository>/<new_image_repository>
 ```
 
 ### Changing PVC selected-node

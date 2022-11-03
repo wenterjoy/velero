@@ -52,7 +52,7 @@ func NewCommand(f client.Factory) *cobra.Command {
 				RegisterRestoreItemAction("velero.io/add-pvc-from-pod", newAddPVCFromPodRestoreItemAction).
 				RegisterRestoreItemAction("velero.io/add-pv-from-pvc", newAddPVFromPVCRestoreItemAction).
 				RegisterRestoreItemAction("velero.io/change-storage-class", newChangeStorageClassRestoreItemAction(f)).
-				RegisterRestoreItemAction("velero.io/change-image-name", newChangeImageNameRestoreItemAction(f)).
+				RegisterRestoreItemAction("velero.io/change-image-repository", newChangeImageRepositoryRestoreItemAction(f)).
 				RegisterRestoreItemAction("velero.io/role-bindings", newRoleBindingItemAction).
 				RegisterRestoreItemAction("velero.io/cluster-role-bindings", newClusterRoleBindingItemAction).
 				RegisterRestoreItemAction("velero.io/crd-preserve-fields", newCRDV1PreserveUnknownFieldsItemAction).
@@ -191,14 +191,14 @@ func newChangeStorageClassRestoreItemAction(f client.Factory) plugincommon.Handl
 	}
 }
 
-func newChangeImageNameRestoreItemAction(f client.Factory) plugincommon.HandlerInitializer {
+func newChangeImageRepositoryRestoreItemAction(f client.Factory) plugincommon.HandlerInitializer {
 	return func(logger logrus.FieldLogger) (interface{}, error) {
 		client, err := f.KubeClient()
 		if err != nil {
 			return nil, err
 		}
 
-		return restore.NewChangeImageNameAction(
+		return restore.NewChangeImageRepositoryAction(
 			logger,
 			client.CoreV1().ConfigMaps(f.Namespace()),
 		), nil
