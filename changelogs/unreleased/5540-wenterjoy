@@ -1,4 +1,4 @@
-add new RestoreItemAction of "velero.io/change-image-name" to handle the issue mentioned at #5519
+add new RestoreItemAction of "velero.io/change-image-repository" to handle the issue mentioned at #5519
 
 
 
