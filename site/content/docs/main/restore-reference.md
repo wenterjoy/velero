@@ -169,8 +169,7 @@ data:
   # class name.
   <old-storage-class>: <new-storage-class>
 ```
-### Changing Pod/Deployment/Statefulsets/Daemonset/Replicaset/Replicationcontroller/Job/Cronjob Image Repositories  
-
+### Changing Pod/Deployment/StatefulSet/DaemonSet/ReplicaSet/ReplicationController/Job/CronJob Image Repositories  
 Velero can change the image repositories of pod/deployment/statefulsets/daemonset/replicaset/replicationcontroller/job/cronjob during restores. To configure a image repositoriy mapping, create a config map in the Velero namespace like the following:
 
 ```yaml
@@ -195,7 +194,7 @@ data:
   # add 1+ key-value pairs here, where the key is the old
   # image repository name and the value is the new image
   # repository name.
-  <old-image-repository>: <[new_image_repository>
+  <old-image-repository>: <new_image_repository>
   # if image repository have letters that configmap not support for key 
   # use "specific" as the key 
   # and use "<old_image_repository>/<new_image_repository>" as the value
