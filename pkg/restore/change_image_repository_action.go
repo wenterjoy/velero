@@ -56,7 +56,7 @@ func NewChangeImageRepositoryAction(
 // be run for.
 func (a *ChangeImageRepositoryAction) AppliesTo() (velero.ResourceSelector, error) {
 	return velero.ResourceSelector{
-		IncludedResources: []string{"deployment", "statefulsets", "daemonset", "replicaset", "replicationcontroller", "job", "CronJob", "pod"},
+		IncludedResources: []string{"deployments", "statefulsets", "daemonsets", "replicasets", "replicationcontrollers", "jobs", "cronjobs", "pods"},
 	}, nil
 }
 
@@ -72,7 +72,7 @@ func (a *ChangeImageRepositoryAction) Execute(input *velero.RestoreItemActionExe
 	}
 
 	if config == nil || len(config.Data) == 0 {
-		a.logger.Info("No image image mappings found")
+		a.logger.Info("No image repository mappings found")
 		return velero.NewRestoreItemActionExecuteOutput(input.Item), nil
 	}
 
