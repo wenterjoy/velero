@@ -35,8 +35,8 @@ import (
 	"github.com/vmware-tanzu/velero/pkg/plugin/velero"
 )
 
-// TestChangeImageRepositoryActionExecute runs the ChangeImageRepositoryAction's Execute
-// method and validates that the item's storage class is modified (or not) as expected.
+// TestChangeImageNameActionExecute runs the ChangeImageNameAction's Execute
+// method and validates that the item's image name is modified (or not) as expected.
 // Validation is done by comparing the result of the Execute method to the test case's
 // desired result.
 func TestChangeImageRepositoryActionExecute(t *testing.T) {
@@ -50,7 +50,7 @@ func TestChangeImageRepositoryActionExecute(t *testing.T) {
 		wantErr          error
 	}{
 		{
-			name: "a valid mapping for a persistent volume is applied correctly",
+			name: "a valid mapping with spaces for a new image repository is applied correctly",
 			podOrObj: builder.ForPod("default", "pod1").ObjectMeta().
 				Containers(&v1.Container{
 					Name:  "container1",
@@ -58,17 +58,77 @@ func TestChangeImageRepositoryActionExecute(t *testing.T) {
 				}).Result(),
 			configMap: builder.ForConfigMap("velero", "change-image-repository").
 				ObjectMeta(builder.WithLabels("velero.io/plugin-config", "true", "velero.io/change-image-repository", "RestoreItemAction")).
-				Data("1.1.1.1", "harbor.lenovo.com", "specific", "1.1.1.1:5000/2.2.2.2:3000").
+				Data("case1", "1.1.1.1:5000  ,  2.2.2.2:3000").
 				Result(),
 			freshedImageName: "2.2.2.2:3000/abc:test",
 			want:             "2.2.2.2:3000/abc:test",
+		},
+
+		{
+			name: "a valid mapping for a new image repository is applied correctly",
+			podOrObj: builder.ForPod("default", "pod1").ObjectMeta().
+				Containers(&v1.Container{
+					Name:  "container2",
+					Image: "1.1.1.1:5000/abc:test",
+				}).Result(),
+			configMap: builder.ForConfigMap("velero", "change-image-repository").
+				ObjectMeta(builder.WithLabels("velero.io/plugin-config", "true", "velero.io/change-image-repository", "RestoreItemAction")).
+				Data("specific", "1.1.1.1:5000,2.2.2.2:3000").
+				Result(),
+			freshedImageName: "2.2.2.2:3000/abc:test",
+			want:             "2.2.2.2:3000/abc:test",
+		},
+
+		{
+			name: "a valid mapping for a new image name is applied correctly",
+			podOrObj: builder.ForPod("default", "pod1").ObjectMeta().
+				Containers(&v1.Container{
+					Name:  "container3",
+					Image: "1.1.1.1:5000/abc:test",
+				}).Result(),
+			configMap: builder.ForConfigMap("velero", "change-image-repository").
+				ObjectMeta(builder.WithLabels("velero.io/plugin-config", "true", "velero.io/change-image-repository", "RestoreItemAction")).
+				Data("specific", "abc:test,myproject:latest").
+				Result(),
+			freshedImageName: "1.1.1.1:5000/myproject:latest",
+			want:             "1.1.1.1:5000/myproject:latest",
+		},
+
+		{
+			name: "a valid mapping for a new image repository port is applied correctly",
+			podOrObj: builder.ForPod("default", "pod1").ObjectMeta().
+				Containers(&v1.Container{
+					Name:  "container3",
+					Image: "1.1.1.1:5000/abc:test",
+				}).Result(),
+			configMap: builder.ForConfigMap("velero", "change-image-repository").
+				ObjectMeta(builder.WithLabels("velero.io/plugin-config", "true", "velero.io/change-image-repository", "RestoreItemAction")).
+				Data("specific", "5000,3333").
+				Result(),
+			freshedImageName: "1.1.1.1:5000/abc:test",
+			want:             "1.1.1.1:3333/abc:test",
+		},
+
+		{
+			name: "a valid mapping for a new image tag is applied correctly",
+			podOrObj: builder.ForPod("default", "pod1").ObjectMeta().
+				Containers(&v1.Container{
+					Name:  "container3",
+					Image: "1.1.1.1:5000/abc:test",
+				}).Result(),
+			configMap: builder.ForConfigMap("velero", "change-image-repository").
+				ObjectMeta(builder.WithLabels("velero.io/plugin-config", "true", "velero.io/change-image-repository", "RestoreItemAction")).
+				Data("specific", "test,latest").
+				Result(),
+			freshedImageName: "1.1.1.1:5000/abc:test",
+			want:             "1.1.1.1:5000/abc:latest",
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			clientset := fake.NewSimpleClientset()
-			a := NewChangeImageRepositoryAction(
+			a := NewChangeImageNameAction(
 				logrus.StandardLogger(),
 				clientset.CoreV1().ConfigMaps("velero"),
 			)
