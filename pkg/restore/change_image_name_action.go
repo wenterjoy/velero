@@ -31,30 +31,30 @@ import (
 )
 
 const (
-	SPECIFIC = "specific"
+	DELIMITER = "image-delimiter"
 )
 
-// ChangeImageRepositoryAction updates a deployment or Pod's image name
+// ChangeImageNameAction updates a deployment or Pod's image name
 // if a mapping is found in the plugin's config map.
-type ChangeImageRepositoryAction struct {
+type ChangeImageNameAction struct {
 	logger          logrus.FieldLogger
 	configMapClient corev1client.ConfigMapInterface
 }
 
-// NewChangeImageRepositoryAction is the constructor for ChangeImageRepositoryAction.
-func NewChangeImageRepositoryAction(
+// NewChangeImageNameAction is the constructor for ChangeImageNameAction.
+func NewChangeImageNameAction(
 	logger logrus.FieldLogger,
 	configMapClient corev1client.ConfigMapInterface,
-) *ChangeImageRepositoryAction {
-	return &ChangeImageRepositoryAction{
+) *ChangeImageNameAction {
+	return &ChangeImageNameAction{
 		logger:          logger,
 		configMapClient: configMapClient,
 	}
 }
 
-// AppliesTo returns the resources that ChangeImageRepositoryAction should
+// AppliesTo returns the resources that ChangeImageNameAction should
 // be run for.
-func (a *ChangeImageRepositoryAction) AppliesTo() (velero.ResourceSelector, error) {
+func (a *ChangeImageNameAction) AppliesTo() (velero.ResourceSelector, error) {
 	return velero.ResourceSelector{
 		IncludedResources: []string{"deployments", "statefulsets", "daemonsets", "replicasets", "replicationcontrollers", "jobs", "cronjobs", "pods"},
 	}, nil
@@ -62,9 +62,9 @@ func (a *ChangeImageRepositoryAction) AppliesTo() (velero.ResourceSelector, erro
 
 // Execute updates the item's spec.containers' image if a mapping is found
 // in the config map for the plugin.
-func (a *ChangeImageRepositoryAction) Execute(input *velero.RestoreItemActionExecuteInput) (*velero.RestoreItemActionExecuteOutput, error) {
-	a.logger.Info("Executing ChangeImageRepositoryAction")
-	defer a.logger.Info("Done executing ChangeImageRepositoryAction")
+func (a *ChangeImageNameAction) Execute(input *velero.RestoreItemActionExecuteInput) (*velero.RestoreItemActionExecuteOutput, error) {
+	a.logger.Info("Executing ChangeImageNameAction")
+	defer a.logger.Info("Done executing ChangeImageNameAction")
 
 	config, err := getPluginConfig(common.PluginKindRestoreItemAction, "velero.io/change-image-repository", a.configMapClient)
 	if err != nil {
@@ -72,7 +72,7 @@ func (a *ChangeImageRepositoryAction) Execute(input *velero.RestoreItemActionExe
 	}
 
 	if config == nil || len(config.Data) == 0 {
-		a.logger.Info("No image repository mappings found")
+		a.logger.Info("No image name mappings found")
 		return velero.NewRestoreItemActionExecuteOutput(input.Item), nil
 	}
 
@@ -97,7 +97,7 @@ func (a *ChangeImageRepositoryAction) Execute(input *velero.RestoreItemActionExe
 
 		if len(pod.Spec.Containers) > 0 {
 			for i, container := range pod.Spec.Containers {
-				if exists, newImageName, err := a.isImageRepositoryExist(log, container.Image, config); exists && err == nil {
+				if exists, newImageName, err := a.isImageReplaceRuleExist(log, container.Image, config); exists && err == nil {
 					needUpdateObj = true
 					a.logger.Infof("Updating item's image from %s to %s", container.Image, newImageName)
 					pod.Spec.Containers[i].Image = newImageName
@@ -107,7 +107,7 @@ func (a *ChangeImageRepositoryAction) Execute(input *velero.RestoreItemActionExe
 
 		if len(pod.Spec.InitContainers) > 0 {
 			for i, container := range pod.Spec.InitContainers {
-				if exists, newImageName, err := a.isImageRepositoryExist(log, container.Image, config); exists && err == nil {
+				if exists, newImageName, err := a.isImageReplaceRuleExist(log, container.Image, config); exists && err == nil {
 					needUpdateObj = true
 					a.logger.Infof("Updating item's image from %s to %s", container.Image, newImageName)
 					pod.Spec.InitContainers[i].Image = newImageName
@@ -134,7 +134,7 @@ func (a *ChangeImageRepositoryAction) Execute(input *velero.RestoreItemActionExe
 			a.logger.Infoln("container:", container)
 			if image, ok := container.(map[string]interface{})["image"]; ok {
 				imageName := image.(string)
-				if exists, newImageName, err := a.isImageRepositoryExist(log, imageName, config); exists && err == nil {
+				if exists, newImageName, err := a.isImageReplaceRuleExist(log, imageName, config); exists && err == nil {
 					needUpdateObj = true
 					a.logger.Infof("Updating item's image from %s to %s", imageName, newImageName)
 					container.(map[string]interface{})["image"] = newImageName
@@ -159,7 +159,7 @@ func (a *ChangeImageRepositoryAction) Execute(input *velero.RestoreItemActionExe
 		for i, container := range initContainers {
 			if image, ok := container.(map[string]interface{})["image"]; ok {
 				imageName := image.(string)
-				if exists, newImageName, err := a.isImageRepositoryExist(log, imageName, config); exists && err == nil {
+				if exists, newImageName, err := a.isImageReplaceRuleExist(log, imageName, config); exists && err == nil {
 					needUpdateObj = true
 					a.logger.Infof("Updating item's image from %s to %s", imageName, newImageName)
 					container.(map[string]interface{})["image"] = newImageName
@@ -186,7 +186,7 @@ func (a *ChangeImageRepositoryAction) Execute(input *velero.RestoreItemActionExe
 			a.logger.Infoln("container:", container)
 			if image, ok := container.(map[string]interface{})["image"]; ok {
 				imageName := image.(string)
-				if exists, newImageName, err := a.isImageRepositoryExist(log, imageName, config); exists && err == nil {
+				if exists, newImageName, err := a.isImageReplaceRuleExist(log, imageName, config); exists && err == nil {
 					needUpdateObj = true
 					a.logger.Infof("Updating item's image from %s to %s", imageName, newImageName)
 					container.(map[string]interface{})["image"] = newImageName
@@ -211,7 +211,7 @@ func (a *ChangeImageRepositoryAction) Execute(input *velero.RestoreItemActionExe
 		for i, container := range initContainers {
 			if image, ok := container.(map[string]interface{})["image"]; ok {
 				imageName := image.(string)
-				if exists, newImageName, err := a.isImageRepositoryExist(log, imageName, config); exists && err == nil {
+				if exists, newImageName, err := a.isImageReplaceRuleExist(log, imageName, config); exists && err == nil {
 					needUpdateObj = true
 					a.logger.Infof("Updating item's image from %s to %s", imageName, newImageName)
 					container.(map[string]interface{})["image"] = newImageName
@@ -230,36 +230,38 @@ func (a *ChangeImageRepositoryAction) Execute(input *velero.RestoreItemActionExe
 	return velero.NewRestoreItemActionExecuteOutput(obj), nil
 }
 
-func (a *ChangeImageRepositoryAction) isImageRepositoryExist(log *logrus.Entry, oldImageName string, cm *corev1.ConfigMap) (exists bool, newImageName string, err error) {
+func (a *ChangeImageNameAction) isImageReplaceRuleExist(log *logrus.Entry, oldImageName string, cm *corev1.ConfigMap) (exists bool, newImageName string, err error) {
 	if oldImageName == "" {
-		log.Infoln("Item has no old image repository specified")
+		log.Infoln("Item has no old image name specified")
 		return false, "", nil
 	}
 	log.Infoln("oldImageName:", oldImageName)
-	oldImageRepository := ""
 
-	if strings.Contains(oldImageName, "/") {
-		oldImageRepository = oldImageName[0:strings.Index(oldImageName, "/")]
-		log.Infoln("Old image repository:", oldImageRepository)
-		log.Infoln("cm.Data:", cm.Data)
-		newImageRepository, ok := cm.Data[oldImageRepository]
-		if !ok {
-			//if image repository have letters that configmap not support for key
-			//use "specific": "[old_image_repository]/[old_image_repository]"
-			//e.x: "specific":"1.1.1.1:5000/2.2.2.2:3000"
-			if v, ok := cm.Data[SPECIFIC]; !ok {
-				log.Infoln("No mapping found for image ", oldImageRepository)
-				return false, "", errors.Errorf("No mapping found for image repository: %s", oldImageRepository)
-			} else if strings.Contains(v, "/") && strings.Compare(v[0:strings.Index(v, "/")], oldImageRepository) == 0 && len(v[strings.Index(v, "/"):]) > 1 {
-				log.Infoln("match specific case:", cm.Data[SPECIFIC])
-				newImageRepository = v[strings.Index(v, "/")+1:]
-				newImageName = strings.Replace(oldImageName, oldImageRepository, newImageRepository, -1)
+	//if image name have letters that configmap not support for key
+	//use "image-delimiter": <delimiter> the value can be any words that can
+	//be used as delimiter
+	//use "case1": "<old_image_name_sub_part><delimiter><new_image_name_sub_part>"
+	//e.x: in case your old image name is 1.1.1.1:5000/abc:test
+	//     "image-delimiter": "%"
+	//     "case1":"1.1.1.1:5000%2.2.2.2:3000"
+	//     "case2":"5000%3000"
+	//     "case3":"abc:test%edf:test"
+	//     "case4":"1.1.1.1:5000/abc:test%2.2.2.2:3000/edf:test"
+	if delimiter, ok := cm.Data[DELIMITER]; !ok {
+		log.Infoln("No mapping found for image ", oldImageName)
+		return false, "", nil
+	} else {
+		for key, row := range cm.Data {
+			if key == DELIMITER {
+				continue
+			}
+			if strings.Contains(row, delimiter) && strings.Contains(oldImageName, row[0:strings.Index(row, delimiter)]) && len(row[strings.Index(row, delimiter):]) > len(delimiter) {
+				log.Infoln("match sepcific case:", cm.Data[key])
+				oldImagePart := row[0:strings.Index(row, delimiter)]
+				newImagePart := row[strings.Index(row, delimiter)+len(delimiter):]
+				newImageName = strings.Replace(oldImageName, oldImagePart, newImagePart, -1)
 				return true, newImageName, nil
 			}
-
-		} else {
-			newImageName = strings.Replace(oldImageName, oldImageRepository, newImageRepository, -1)
-			return true, newImageName, nil
 		}
 	}
 
