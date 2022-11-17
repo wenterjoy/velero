@@ -31,7 +31,8 @@ import (
 )
 
 const (
-	DELIMITER = "image-delimiter"
+	DELIMITER_KEY   = "image-delimiter"
+	DELIMITER_VALUE = ","
 )
 
 // ChangeImageNameAction updates a deployment or Pod's image name
@@ -235,35 +236,40 @@ func (a *ChangeImageNameAction) isImageReplaceRuleExist(log *logrus.Entry, oldIm
 		log.Infoln("Item has no old image name specified")
 		return false, "", nil
 	}
-	log.Infoln("oldImageName:", oldImageName)
+	log.Debug("oldImageName: ", oldImageName)
 
 	//if image name have letters that configmap not support for key
 	//use "image-delimiter": <delimiter> the value can be any words that can
 	//be used as delimiter
+	//for current implementation the <delimiter> value can only be ","
 	//use "case1": "<old_image_name_sub_part><delimiter><new_image_name_sub_part>"
 	//e.x: in case your old image name is 1.1.1.1:5000/abc:test
-	//     "image-delimiter": "%"
-	//     "case1":"1.1.1.1:5000%2.2.2.2:3000"
-	//     "case2":"5000%3000"
-	//     "case3":"abc:test%edf:test"
-	//     "case4":"1.1.1.1:5000/abc:test%2.2.2.2:3000/edf:test"
-	if delimiter, ok := cm.Data[DELIMITER]; !ok {
-		log.Infoln("No mapping found for image ", oldImageName)
-		return false, "", nil
+	//     "image-delimiter": ","
+	//     "case1":"1.1.1.1:5000,2.2.2.2:3000"
+	//     "case2":"5000,3000"
+	//     "case3":"abc:test,edf:test"
+	//     "case4":"1.1.1.1:5000/abc:test,2.2.2.2:3000/edf:test"
+	if delimiter, ok := cm.Data[DELIMITER_KEY]; !ok {
+		log.Debug("No mapping delimiter found for image: ", oldImageName)
+		return false, "", errors.Errorf("No mapping delimiter found for image: %s", oldImageName)
+	} else if delimiter != DELIMITER_VALUE {
+		log.Debug("Invalid mapping delimiter found for image: ", oldImageName)
+		return false, "", errors.Errorf("Invalid mapping delimiter found for image: %s", oldImageName)
 	} else {
 		for key, row := range cm.Data {
-			if key == DELIMITER {
+			if key == DELIMITER_KEY {
 				continue
 			}
-			if strings.Contains(row, delimiter) && strings.Contains(oldImageName, row[0:strings.Index(row, delimiter)]) && len(row[strings.Index(row, delimiter):]) > len(delimiter) {
-				log.Infoln("match sepcific case:", cm.Data[key])
-				oldImagePart := row[0:strings.Index(row, delimiter)]
-				newImagePart := row[strings.Index(row, delimiter)+len(delimiter):]
+
+			if strings.Contains(row, delimiter) && strings.Contains(oldImageName, strings.TrimSpace(row[0:strings.Index(row, delimiter)])) && len(row[strings.Index(row, delimiter):]) > len(delimiter) {
+				log.Infoln("match specific case:", cm.Data[key])
+				oldImagePart := strings.TrimSpace(row[0:strings.Index(row, delimiter)])
+				newImagePart := strings.TrimSpace(row[strings.Index(row, delimiter)+len(delimiter):])
 				newImageName = strings.Replace(oldImageName, oldImagePart, newImagePart, -1)
 				return true, newImageName, nil
 			}
 		}
 	}
 
-	return false, "", nil
+	return false, "", errors.Errorf("No mapping rule found for image: %s", oldImageName)
 }
