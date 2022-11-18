@@ -58,7 +58,7 @@ func TestChangeImageRepositoryActionExecute(t *testing.T) {
 				}).Result(),
 			configMap: builder.ForConfigMap("velero", "change-image-repository").
 				ObjectMeta(builder.WithLabels("velero.io/plugin-config", "true", "velero.io/change-image-repository", "RestoreItemAction")).
-				Data("image-delimiter", ",", "case1", "1.1.1.1:5000  ,  2.2.2.2:3000").
+				Data("case1", "1.1.1.1:5000  ,  2.2.2.2:3000").
 				Result(),
 			freshedImageName: "2.2.2.2:3000/abc:test",
 			want:             "2.2.2.2:3000/abc:test",
@@ -73,7 +73,7 @@ func TestChangeImageRepositoryActionExecute(t *testing.T) {
 				}).Result(),
 			configMap: builder.ForConfigMap("velero", "change-image-repository").
 				ObjectMeta(builder.WithLabels("velero.io/plugin-config", "true", "velero.io/change-image-repository", "RestoreItemAction")).
-				Data("image-delimiter", ",", "specific", "1.1.1.1:5000,2.2.2.2:3000").
+				Data("specific", "1.1.1.1:5000,2.2.2.2:3000").
 				Result(),
 			freshedImageName: "2.2.2.2:3000/abc:test",
 			want:             "2.2.2.2:3000/abc:test",
@@ -88,7 +88,7 @@ func TestChangeImageRepositoryActionExecute(t *testing.T) {
 				}).Result(),
 			configMap: builder.ForConfigMap("velero", "change-image-repository").
 				ObjectMeta(builder.WithLabels("velero.io/plugin-config", "true", "velero.io/change-image-repository", "RestoreItemAction")).
-				Data("image-delimiter", ",", "specific", "abc:test,myproject:latest").
+				Data("specific", "abc:test,myproject:latest").
 				Result(),
 			freshedImageName: "1.1.1.1:5000/myproject:latest",
 			want:             "1.1.1.1:5000/myproject:latest",
@@ -103,7 +103,7 @@ func TestChangeImageRepositoryActionExecute(t *testing.T) {
 				}).Result(),
 			configMap: builder.ForConfigMap("velero", "change-image-repository").
 				ObjectMeta(builder.WithLabels("velero.io/plugin-config", "true", "velero.io/change-image-repository", "RestoreItemAction")).
-				Data("image-delimiter", ",", "specific", "5000,3333").
+				Data("specific", "5000,3333").
 				Result(),
 			freshedImageName: "1.1.1.1:5000/abc:test",
 			want:             "1.1.1.1:3333/abc:test",
@@ -118,7 +118,7 @@ func TestChangeImageRepositoryActionExecute(t *testing.T) {
 				}).Result(),
 			configMap: builder.ForConfigMap("velero", "change-image-repository").
 				ObjectMeta(builder.WithLabels("velero.io/plugin-config", "true", "velero.io/change-image-repository", "RestoreItemAction")).
-				Data("image-delimiter", ",", "specific", "test,latest").
+				Data("specific", "test,latest").
 				Result(),
 			freshedImageName: "1.1.1.1:5000/abc:test",
 			want:             "1.1.1.1:5000/abc:latest",
