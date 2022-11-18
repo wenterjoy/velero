@@ -191,20 +191,12 @@ metadata:
     # that this ConfigMap is for.
     velero.io/change-image-repository: RestoreItemAction
 data:
-  # add 1+ key-value pairs here, where the key is constant of 
-  # "image-delimiter" 
-  # the value is the delimiter words use for the change action:
-  # use "image-delimiter": <delimiter>
-  # for current implementation the <delimiter> value can only be ","
-  # for each case that you want to change image name 
-  # the key-value pairs can be:
-  # the key could be any words except "image-delimiter"
-  # the value is the old image name sub part and the new image name
-  # all the space in the value will be ignored.
-  # sub part which you want to replace.
-  # "case1": "<old_image_name_sub_part><delimiter><new_image_name_sub_part>"
+  # add 1+ key-value pairs here, where the key can be any
+  # words that ConfigMap accpets. 
+  # the value should be：
+  # "<old_image_name_sub_part><delimiter><new_image_name_sub_part>"
+  # for current implementation the <delimiter> can only be ","
 	# e.x: in case your old image name is 1.1.1.1:5000/abc:test
-	"image-delimiter": ","
 	"case1":"1.1.1.1:5000,2.2.2.2:3000"
 	"case2":"5000,3000"
 	"case3":"abc:test,edf:test"
