@@ -192,7 +192,7 @@ metadata:
     velero.io/change-image-repository: RestoreItemAction
 data:
   # add 1+ key-value pairs here, where the key can be any
-  # words that ConfigMap accpets. 
+  # words that ConfigMap accepts. 
   # the value should be：
   # "<old_image_name_sub_part><delimiter><new_image_name_sub_part>"
   # for current implementation the <delimiter> can only be ","
