@@ -122,7 +122,7 @@ func (a *ChangeImageNameAction) Execute(input *velero.RestoreItemActionExecuteIn
 			obj.Object = newObj
 		}
 
-	} else if obj.GetKind() == "Job" || obj.GetKind() == "CronJob" {
+	} else if obj.GetKind() == "CronJob" {
 		//handle containers
 		needUpdateObj := false
 		containers, _, err := unstructured.NestedSlice(obj.UnstructuredContent(), "spec", "jobTemplate", "spec", "template", "spec", "containers")
