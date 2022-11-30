@@ -189,7 +189,7 @@ metadata:
     velero.io/plugin-config: ""
     # this label identifies the name and kind of plugin
     # that this ConfigMap is for.
-    velero.io/change-image-repository: RestoreItemAction
+    velero.io/change-image-name: RestoreItemAction
 data:
   # add 1+ key-value pairs here, where the key can be any
   # words that ConfigMap accepts. 

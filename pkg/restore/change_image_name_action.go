@@ -66,7 +66,7 @@ func (a *ChangeImageNameAction) Execute(input *velero.RestoreItemActionExecuteIn
 	a.logger.Info("Executing ChangeImageNameAction")
 	defer a.logger.Info("Done executing ChangeImageNameAction")
 
-	config, err := getPluginConfig(common.PluginKindRestoreItemAction, "velero.io/change-image-repository", a.configMapClient)
+	config, err := getPluginConfig(common.PluginKindRestoreItemAction, "velero.io/change-image-name", a.configMapClient)
 	if err != nil {
 		return nil, err
 	}
