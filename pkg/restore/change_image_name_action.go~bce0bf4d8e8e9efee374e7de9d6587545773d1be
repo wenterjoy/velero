@@ -17,14 +17,11 @@ limitations under the License.
 package restore
 
 import (
-	"context"
-	"fmt"
 	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	corev1client "k8s.io/client-go/kubernetes/typed/core/v1"
@@ -69,29 +66,12 @@ func (a *ChangeImageNameAction) Execute(input *velero.RestoreItemActionExecuteIn
 	a.logger.Info("Executing ChangeImageNameAction")
 	defer a.logger.Info("Done executing ChangeImageNameAction")
 
-	opts := metav1.ListOptions{
-		LabelSelector: fmt.Sprintf("velero.io/plugin-config,%s=%s", common.PluginKindRestoreItemAction, "velero.io/change-image-name"),
-	}
-
-	list, err := a.configMapClient.List(context.TODO(), opts)
+	config, err := getPluginConfig(common.PluginKindRestoreItemAction, "velero.io/change-image-repository", a.configMapClient)
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, err
 	}
 
-	if len(list.Items) == 0 {
-		return nil, nil
-	}
-
-	if len(list.Items) > 1 {
-		var items []string
-		for _, item := range list.Items {
-			items = append(items, item.Name)
-		}
-		return nil, errors.Errorf("found more than one ConfigMap matching label selector %q: %v", opts.LabelSelector, items)
-	}
-
-	config := &list.Items[0]
-	if len(config.Data) == 0 {
+	if config == nil || len(config.Data) == 0 {
 		a.logger.Info("No image name mappings found")
 		return velero.NewRestoreItemActionExecuteOutput(input.Item), nil
 	}
