@@ -70,7 +70,7 @@ func (a *ChangeImageNameAction) Execute(input *velero.RestoreItemActionExecuteIn
 	defer a.logger.Info("Done executing ChangeImageNameAction")
 
 	opts := metav1.ListOptions{
-		LabelSelector: fmt.Sprintf("velero.io/plugin-config,%s=%s", common.PluginKindRestoreItemAction, "velero.io/change-image-name"),
+		LabelSelector: fmt.Sprintf("velero.io/plugin-config,%s=%s", "velero.io/change-image-name", common.PluginKindRestoreItemAction),
 	}
 
 	list, err := a.configMapClient.List(context.TODO(), opts)
