@@ -169,6 +169,40 @@ data:
   # class name.
   <old-storage-class>: <new-storage-class>
 ```
+### Changing Pod/Deployment/StatefulSet/DaemonSet/ReplicaSet/ReplicationController/Job/CronJob Image Repositories  
+Velero can change the image name of pod/deployment/statefulsets/daemonset/replicaset/replicationcontroller/job/cronjob during restores. To configure a image name mapping, create a config map in the Velero namespace like the following:
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  # any name can be used; Velero uses the labels (below)
+  # to identify it rather than the name
+  name: change-image-name-config
+  # must be in the velero namespace
+  namespace: velero
+  # the below labels should be used verbatim in your
+  # ConfigMap.
+  labels:
+    # this value-less label identifies the ConfigMap as
+    # config for a plugin (i.e. the built-in restore item action plugin)
+    velero.io/plugin-config: ""
+    # this label identifies the name and kind of plugin
+    # that this ConfigMap is for.
+    velero.io/change-image-name: RestoreItemAction
+data:
+  # add 1+ key-value pairs here, where the key can be any
+  # words that ConfigMap accepts. 
+  # the value should be：
+  # "<old_image_name_sub_part><delimiter><new_image_name_sub_part>"
+  # for current implementation the <delimiter> can only be ","
+  # e.x: in case your old image name is 1.1.1.1:5000/abc:test
+	"case1":"1.1.1.1:5000,2.2.2.2:3000"
+	"case2":"5000,3000"
+	"case3":"abc:test,edf:test"
+  "case5":"test,latest"
+	"case4":"1.1.1.1:5000/abc:test,2.2.2.2:3000/edf:test"
+```
 
 ### Changing PVC selected-node
 
